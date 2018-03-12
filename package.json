@@ -1,0 +1,23 @@
+{
+  "name": "open_badge_bakery",
+  "version": "1.0.0",
+  "description": "Open Badge Bakery Service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Christian Willems",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "config": "^1.30.0",
+    "express": "^4.16.2",
+    "jws": "^3.1.4",
+    "node-fs": "^0.1.7",
+    "openbadges-bakery": "^1.0.5"
+  }
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/openHPI/openbadge-bakery"
+  } 
+}
