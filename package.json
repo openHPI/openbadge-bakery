@@ -14,10 +14,11 @@
     "express": "^4.16.2",
     "jws": "^3.1.4",
     "node-fs": "^0.1.7",
-    "openbadges-bakery": "^1.0.5"
-  }
+    "png-itxt": "finnp/png-itxt",
+    "randomstring": "^1.1.5"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/openHPI/openbadge-bakery"
-  } 
+  }
 }

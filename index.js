@@ -1,10 +1,11 @@
-const express    = require('express')
-const bodyParser = require('body-parser')
-const bakery     = require('openbadges-bakery')
-const jws        = require('jws')
-const fs         = require('node-fs')
-const config     = require('config')
-const svg2img    = require('node-svg2img')
+const express      = require('express')
+const bodyParser   = require('body-parser')
+const jws          = require('jws')
+const fs           = require('node-fs')
+const config       = require('config')
+const pngitxt      = require('png-itxt')
+const randomstring = require('randomstring')
+
 
 const app  = express()
 const port = Number(process.env.PORT || config.server.port || 9000)
@@ -14,6 +15,7 @@ app.use(bodyParser.json())
 
 app.use((request, response, next) => {
   if (!request.body.assertion) return response.status(422).send({ error: "Request must contain assertion" })  
+  if (!request.body.imagePath) return response.status(422).send({ error: "Request must contain imagePath" }) 
   next()
 })
 
@@ -27,18 +29,19 @@ app.post('/bake', (request, response) => {
     console.log("Verified:", verifySignature(signedAssertion))
   }
 
-  var imageBuf = Buffer(request.body.image, 'utf8')
-  bakery.bake({ image: imageBuf, signature: signedAssertion }, (err, imageData) => {
-    if (err) {
-      return fail(err)
-    }
+  var itxtData = {
+    type: 'iTXt',
+    keyword: "openbadges",
+    value: signedAssertion,
+    language: '',
+    translated: '',
+    compressed: false,
+    compression_type: 0
+  }
 
-    console.log(imageData)
-  })
-
-
-  
-  response.send(signedAssertion)
+  fs.createReadStream(config.images.basePath + request.body.imagePath)
+    .pipe(pngitxt.set(itxtData))
+    .pipe(response.contentType('image/png'))
 })
 
 app.listen(port, (err) => {
@@ -62,15 +65,5 @@ function verifySignature(signed) {
 }
 
 function decodePayload(signed) {
-  return jws.decode(signed).payload;
-
-}
-
-function isSvg(data) {
-  return typeof(data == 'string') && data.indexOf('svg version') > -1
-}
-
-function fail(err) {
-  console.log('Could not bake badge', err)
-  return response.status(500).send({ error: err })
+  return jws.decode(signed).payload
 }
