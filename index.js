@@ -2,6 +2,7 @@ const express      = require("express")
 const bodyParser   = require("body-parser")
 const jws          = require("jws")
 const fs           = require("node-fs")
+const path         = require("path")
 const config       = require("config")
 const pngitxt      = require("png-itxt")
 const randomstring = require("randomstring")
@@ -40,8 +41,9 @@ app.post("/bake", (request, response) => {
   }
 
   try {
-    if (fs.existsSync(config.images.basePath + request.body.imagePath)) {
-      fs.createReadStream(config.images.basePath + request.body.imagePath)
+    imagePath = path.join(config.images.basePath, request.body.imagePath)
+    if (fs.existsSync(imagePath)) {
+      fs.createReadStream(imagePath)
         .pipe(pngitxt.set(itxtData))
         .pipe(response.contentType("image/png"))
       } else {
