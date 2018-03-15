@@ -14,8 +14,9 @@
     "express": "^4.16.2",
     "jws": "^3.1.4",
     "node-fs": "^0.1.7",
-    "png-itxt": "finnp/png-itxt",
-    "randomstring": "^1.1.5"
+    "npm": "^5.7.1",
+    "randomstring": "^1.1.5",
+    "streampng": "blokaly/streampng"
   },
   "repository": {
     "type": "git",

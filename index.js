@@ -4,7 +4,7 @@ const jws          = require("jws")
 const fs           = require("node-fs")
 const path         = require("path")
 const config       = require("config")
-const pngitxt      = require("png-itxt")
+const streampng    = require("streampng")
 const randomstring = require("randomstring")
 
 
@@ -30,26 +30,18 @@ app.post("/bake", (request, response) => {
     console.log("INFO - verified:", verifySignature(signedAssertion))
   }
 
-  var itxtData = {
-    type: "iTXt",
-    keyword: "openbadges",
-    value: signedAssertion,
-    language: "",
-    translated: "",
-    compressed: false,
-    compression_type: 0
-  }
-
   try {
     imagePath = path.join(config.images.basePath, request.body.imagePath)
     if (fs.existsSync(imagePath)) {
-      fs.createReadStream(imagePath)
-        .pipe(pngitxt.set(itxtData))
-        .pipe(response.contentType("image/png"))
-      } else {
-        console.log("ERROR - error when baking badge: can't find badge template file")
-        response.status(500).send({ error: "could not bake badge: template file missing" })
-      }
+      var png = streampng(fs.createReadStream(imagePath))
+      var chunk = createAssertionChunk(signedAssertion)
+      png.inject(chunk)
+      png.out().pipe(response.contentType('image/png'))
+     
+    } else {
+      console.log("ERROR - error when baking badge: can't find badge template file")
+      response.status(500).send({ error: "could not bake badge: template file missing" })
+    }
   } catch (err) {
     console.log("ERROR - error when baking badge:", err)
     response.status(500).send({ error: "could not bake badge" })
@@ -69,6 +61,13 @@ function signAssertion(assertion) {
     header: { alg: config.signing.algorithm },
     payload: assertion,
     privateKey: config.signing.privateKey
+  })
+}
+
+function createAssertionChunk(data) {
+  return streampng.Chunk.iTXt({
+    keyword: 'openbadges',
+    text: data
   })
 }
 
