@@ -7,17 +7,28 @@ const config       = require("config")
 const streampng    = require("streampng")
 const randomstring = require("randomstring")
 
-
 const app  = express()
 const port = Number(process.env.PORT || config.server.port || 9000)
 const env  = process.env.NODE_ENV || "development"
+var bakeryConfig = config.get('bakery')
 
 app.use(bodyParser.json())
 
 app.use((request, response, next) => {
   if (!request.body.assertion) return response.status(422).send({ error: "request must contain assertion" })  
   if (!request.body.imagePath) return response.status(422).send({ error: "request must contain imagePath" })
-  console.log("INFO - baking for assertion:", request.body.assertion.id) 
+
+  if (request.body.flavor) {
+    try {
+      bakeryConfig = config.get(request.body.flavor)
+    } catch (err) {
+      console.log("ERROR - request for unknown flavor:", request.body.flavor)
+      return response.status(422).send({ error: "unknown flavor" })
+    }
+  }
+
+  console.log("INFO - baking with flavor:", request.body.flavor)
+  console.log("INFO - baking for assertion:", request.body.assertion.id)
   next()
 })
 
@@ -31,7 +42,7 @@ app.post("/bake", (request, response) => {
   }
 
   try {
-    imagePath = path.join(config.images.basePath, request.body.imagePath)
+    imagePath = path.join(bakeryConfig.images.basePath, request.body.imagePath)
     if (fs.existsSync(imagePath)) {
       var png = streampng(fs.createReadStream(imagePath))
       var chunk = createAssertionChunk(signedAssertion)
@@ -58,9 +69,9 @@ app.listen(port, (err) => {
 
 function signAssertion(assertion) {
   return jws.sign({
-    header: { alg: config.signing.algorithm },
+    header: { alg: bakeryConfig.signing.algorithm },
     payload: assertion,
-    privateKey: config.signing.privateKey
+    privateKey: bakeryConfig.signing.privateKey
   })
 }
 
@@ -72,7 +83,7 @@ function createAssertionChunk(data) {
 }
 
 function verifySignature(signed) {
-  return jws.verify(signed, config.signing.algorithm, config.signing.publicKey)
+  return jws.verify(signed, bakeryConfig.signing.algorithm, bakeryConfig.signing.publicKey)
 }
 
 function decodePayload(signed) {
